@@ -58,9 +58,10 @@
   </head>
   <body>
     <div class="wrapper">
-      <form class="form-signin">
+      <form id="myform" class="form-signin">
         <h2 class="form-signin-heading">Please login</h2>
         <input
+          id="uname"
           type="text"
           class="form-control"
           name="username"
@@ -69,6 +70,7 @@
           autofocus=""
         />
         <input
+          id="pwd"
           type="password"
           class="form-control"
           name="password"
@@ -84,10 +86,24 @@
           />
           Remember me
         </label>
-        <button class="btn btn-lg btn-primary btn-block" type="submit">
+        <button
+          class="btn btn-lg btn-primary btn-block"
+          type="submit"
+          onclick="formFun()"
+        >
           Login
         </button>
       </form>
     </div>
   </body>
+
+  <script>
+    function formFun() {
+      event.preventDefault();
+      uname = document.getElementById("uname").value;
+      pass = document.getElementById("pass").value;
+      document.getElementById("myform").submit();
+      console.log("submitted", uname + " " + pass);
+    }
+  </script>
 </html>
