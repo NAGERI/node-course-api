@@ -37,5 +37,5 @@ app.use("/login", loginRouter);
 app.use("/node-course", courseRouter);
 
 app.listen(process.env.PORT, () =>
-  console.log(`File Server app listening on port ${process.env.PORT}!`)
+  console.log(`File Server app listening on port http://localhost:${process.env.PORT}!`)
 );
