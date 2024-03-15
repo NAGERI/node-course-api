@@ -7,7 +7,7 @@ courseRouter.route("/").get(course.getAllCourses).post(course.createCourse);
 courseRouter
   .route("/:id")
   .get(course.getCourse)
-  .delete(course.deleteCourse)
-  .patch(course.updateCourse);
+  .patch(course.updateCourse)
+  .delete(course.deleteCourse);
 
 export default courseRouter;

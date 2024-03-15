@@ -1,29 +1,25 @@
-// import data from '../models/courses.json' assert {type: 'json'};
-import {writeFile, readFile} from "fs"
-import fs  from "fs";
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { writeFileSync } from "fs";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PATH = `${__dirname}\\courses.json`;
+const PATH = path.join(__dirname, "../models/courses.json");
 
 /**
  * @param null
  * @returns array of courses.
-*/
+ */
 const getAllCourses = (req, res) => {
-
-fs.readFile(PATH, "utf8", (error, data) => {
-  if (error) {
-    console.log(error);
-    return;
-  }
-  console.log(JSON.parse(data));
-});
-  // console.log(data[0]);
-  res.status(200).json("All Courses");
+  fs.readFile(PATH, "utf8", (error, data) => {
+    if (error) {
+      console.log(error);
+      return;
+    }
+    return res.status(200).json(JSON.parse(data));
+  });
 };
 
 /**
@@ -33,16 +29,71 @@ fs.readFile(PATH, "utf8", (error, data) => {
  */
 const getCourse = (req, res) => {
   const { id } = req.params;
-  if (id) {
-    res.status(200).json({ msg: `Course with ID: ${id} found` });
-  } else {
+  if (!id) {
     res.status(400).json({ msg: "Please provide Course ID!" });
+    return;
   }
+  // Read the file
+  fs.readFile(PATH, "utf8", (err, data) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    const jsonData = JSON.parse(data);
+    // Find the record to update
+    const recordIndex = jsonData.findIndex((record) => record.id === id);
+
+    if (recordIndex === -1) {
+      console.error("Record not found");
+      return res.status(400).json({ msg: " Course ID not found!" });
+    }
+    return res.status(200).json(jsonData[recordIndex]);
+  });
 };
 
 const updateCourse = (req, res) => {
-  res.status(200).json({ msg: "Course Updated successfully." });
+  const { id } = req.params;
+  const { ...vals } = req.body;
+  if (!id) {
+    return res.status(400).json({ msg: "Please provide Course ID!" });
+  }
+  // Read the file
+  fs.readFile(PATH, "utf8", (err, data) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    const jsonData = JSON.parse(data);
+    // Find the record to update
+    const recordIndex = jsonData.findIndex((record) => record.id === id);
+
+    if (recordIndex === -1) {
+      console.error("Record not found");
+      return res.status(400).json({ msg: " Course ID not found!" });
+    }
+    let oldCourse = jsonData[recordIndex];
+
+    // Update the values
+    jsonData[recordIndex] = {
+      id,
+      title: vals.title || oldCourse.title,
+      description: vals.description || oldCourse.description,
+      instructor: vals.instructor || oldCourse.instructor,
+      price: vals.price || oldCourse.price,
+      createdAt: new Date().toISOString(),
+    };
+    console.info(vals);
+
+    try {
+      writeFileSync(PATH, JSON.stringify(jsonData, null, 2), "utf-8");
+      return res.status(200).json(jsonData[recordIndex]);
+    } catch (error) {
+      console.log("Failed to write updated data to file");
+      return;
+    }
+  });
 };
+
 /**
  * @route POST /courses
  * @desc Create a course
@@ -50,42 +101,67 @@ const updateCourse = (req, res) => {
  */
 const createCourse = (req, res) => {
   const Data = req.body;
-  if (Data) {
-    /** const DATA = {
-      "id" : data.id,
-      "title" : data.title,
-      "description": data.description,
-      "instructor" : data.instructor,
-      "price" : data.price,
-      "createdAt" : new Date().toISOString()
-    }*/
-    Data.createdAt = new Date().toISOString("GMT+3");
-    readFile(PATH, (error, data) => {
-    if (error) {
-    console.log(error);
-    return;
-    }
-    const parsedData = JSON.parse(data);
-    console.log(parsedData)
-    writeFile(PATH, JSON.stringify(Data, null, 2), (err) => {
-      if (err) {
-        console.log('Failed to write updated data to file');
-        return;
-      } 
-      console.log('Updated file successfully');
-    });
-    }
-    );
+  if (!Data) {
+    return res.status(400).json({ msg: " Course Data not provided!" });
+  }
 
-  } else {
-      res.status(500).json({ msg: " ID not provided!" });
+  fs.readFile(PATH, "utf8", (err, data) => {
+    if (err) {
+      console.error(err);
+      return;
     }
+    const jsonData = JSON.parse(data);
+    // Find the record to update
+    const recordIndex = jsonData.findIndex((record) => record.id === Data.id);
+    Data.createdAt = new Date().toISOString();
 
-  res.status(200).json({ msg: "Course created Successfuly." });
+    if (recordIndex >= 0) {
+      console.error("Record already exists.");
+      return res.status(400).json({ msg: " Course already exists!" });
+    } else {
+      try {
+        jsonData.push(Data);
+        writeFileSync(PATH, JSON.stringify(jsonData, null, 2), "utf-8");
+        console.log("Updated file successfully");
+        res.status(200).json({ msg: "Course created Successfuly." });
+      } catch (error) {
+        console.log("Failed to write updated data to file");
+        return res.status(500);
+      }
+    }
+  });
 };
 
 const deleteCourse = (req, res) => {
-  res.status(200).json({ msg: "Course Deleted" });
+  const { id } = req.params;
+  if (!id) {
+    return res.status(400).json({ msg: "Please provide Course ID!" });
+  }
+  // Read the file
+  fs.readFile(PATH, "utf8", (err, data) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    const jsonData = JSON.parse(data);
+    // Find the record to update
+    const recordIndex = jsonData.findIndex((record) => record.id === id);
+
+    if (recordIndex === -1) {
+      return res.status(400).json({ msg: " Course ID not found!" });
+    }
+
+    // Delete the value
+    jsonData.splice(recordIndex, 1);
+
+    try {
+      writeFileSync(PATH, JSON.stringify(jsonData, null, 2), "utf-8");
+      return res.status(200).json({ msg: "Course Deleted Successfuly." });
+    } catch (error) {
+      console.log("Failed to write updated data to file");
+      return;
+    }
+  });
 };
 
 export const course = {
