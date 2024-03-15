@@ -15,6 +15,7 @@ const PATH = path.join(__dirname, "../models/courses.json");
 const getAllCourses = (req, res) => {
   fs.readFile(PATH, "utf8", (error, data) => {
     if (error) {
+      console.log(PATH);
       console.log(error);
       return;
     }
