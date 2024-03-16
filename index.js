@@ -51,9 +51,8 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const uname = "john";
   const pass = "password";
-  const username = req.body.username;
-  const password = req.body.password;
-  console.log(req.body.username);
+  const { username, password } = req.body;
+
   if (!username || !password) {
     return res.status(400).send("Please provide Username & Password!");
   }
@@ -65,15 +64,18 @@ app.post("/login", (req, res) => {
   }
 
   localStorage.setItem("loggedIn", "OK");
-  res.sendFile(path.join(__dirname, "Public", "node-course.html"));
+  res.redirect("/node-course");
 });
 
 app.get("/node-course", (req, res) => {
-  const loggedIn = localStorage.getItem("loggedIn");
-  if (loggedIn === "OK") {
-    res.sendFile(path.join(__dirname, "Public", "node-course.html"));
-  } else {
-    res.sendFile(path.join(__dirname, "Public", "login.html"));
+  try {
+    const loggedIn = localStorage.getItem("loggedIn");
+    if (loggedIn === "OK") {
+      res.sendFile(path.join(__dirname, "Public", "node-course.html"));
+    }
+  } catch (error) {
+    console.error(error);
+    res.redirect("/login");
   }
 });
 app.use("/api/courses", courseRouter);
