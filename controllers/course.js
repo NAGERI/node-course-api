@@ -1,4 +1,4 @@
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync } from "fs";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -13,13 +13,13 @@ const PATH = path.join(__dirname, "../models/courses.json");
  * @returns array of courses.
  */
 const getAllCourses = (req, res) => {
-  fs.readFile(PATH, "utf8", (error, data) => {
-    if (error) {
-      console.log(error);
-      return;
-    }
-    return res.status(200).json(JSON.parse(data));
-  });
+  try {
+    const coursesData = readFileSync(PATH, "utf-8");
+    return res.status(200).json(JSON.parse(coursesData));
+  } catch (error) {
+    console.error("Error getting courses:", error);
+    res.status(404).json({ message: "Error getting courses" });
+  }
 };
 
 /**
