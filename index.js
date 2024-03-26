@@ -6,10 +6,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import courseRouter from "./routes/courses.js";
+import { uploadFile } from "./utils/uploadFile.js";
 
 const app = express();
 app.use(express.json());
-app.use(express.urlencoded());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 const PORT = process.env.PORT || 4000;
 
@@ -37,6 +38,10 @@ app.get("/", function (req, res) {
 });
 app.get("/login", (req, res) => {
   res.sendFile(path.join(__dirname, "Public", "login.html"));
+});
+app.get("/logout", (req, res) => {
+  loggedIn = false;
+  res.redirect("/login");
 });
 
 app.post("/login", (req, res) => {
@@ -68,6 +73,8 @@ app.get("/node-course", (req, res) => {
     console.error(error);
   }
 });
+// Upload images endpoint
+app.post("/api/upload", uploadFile);
 app.use("/api/courses", courseRouter);
 app.listen(PORT, () =>
   console.log(`Course Server listening on ${BASE_URL}:${PORT}`)
