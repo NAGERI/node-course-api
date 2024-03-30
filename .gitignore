@@ -115,4 +115,5 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-scratch/
+package-lock.json
+**/migrations/

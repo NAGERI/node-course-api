@@ -1,24 +1,19 @@
-import { writeFileSync, readFileSync } from "fs";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import { PrismaClient } from "@prisma/client";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const PATH = path.join(__dirname, "../models/courses.json");
+const prisma = new PrismaClient();
 
 /**
  * @param null
  * @returns array of courses.
  */
-const getAllCourses = (req, res) => {
+const getAllCourses = async (req, res) => {
   try {
-    const coursesData = readFileSync(PATH, "utf-8");
-    return res.status(200).json(JSON.parse(coursesData));
+
+    const coursesData = await prisma.course.findMany();
+    return res.status(200).json(coursesData);
   } catch (error) {
-    console.error("Error getting courses:", error);
-    res.status(404).json({ message: "Error getting courses" });
+    await prisma.$disconnect();
+    res.status(404).json({ message: "Error getting courses", err:error });
   }
 };
 
@@ -27,71 +22,51 @@ const getAllCourses = (req, res) => {
  * @desc Get course with ID number
  * @returns a course given ID.
  */
-const getCourse = (req, res) => {
+const getCourse = async (req, res) => {
   const { id } = req.params;
   if (!id) {
     res.status(400).json({ msg: "Please provide Course ID!" });
     return;
   }
-  // Read the file
-  fs.readFile(PATH, "utf8", (err, data) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-    const jsonData = JSON.parse(data);
-    // Find the record to update
-    const recordIndex = jsonData.findIndex((record) => record.id === id);
+  try {
 
-    if (recordIndex === -1) {
-      console.error("Record not found");
-      return res.status(400).json({ msg: " Course ID not found!" });
-    }
-    return res.status(200).json(jsonData[recordIndex]);
-  });
+    // Query the database.
+    const course = await prisma.course.findUnique({
+      where: { id: Number(id) }
+    })
+    res.status(200).json(course);
+
+  } catch (error) {
+    await prisma.$disconnect();
+    res.status(404).json({ msg: "Course not Found!" });
+
+  }
+
+
 };
 
-const updateCourse = (req, res) => {
+const updateCourse = async (req, res) => {
   const { id } = req.params;
   const { ...vals } = req.body;
   if (!id) {
     return res.status(400).json({ msg: "Please provide Course ID!" });
   }
-  // Read the file
-  fs.readFile(PATH, "utf8", (err, data) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-    const jsonData = JSON.parse(data);
-    // Find the record to update
-    const recordIndex = jsonData.findIndex((record) => record.id === id);
-
-    if (recordIndex === -1) {
-      console.error("Record not found");
-      return res.status(400).json({ msg: " Course ID not found!" });
-    }
-    let oldCourse = jsonData[recordIndex];
-
-    // Update the values
-    jsonData[recordIndex] = {
-      id,
-      title: vals.title || oldCourse.title,
-      description: vals.description || oldCourse.description,
-      instructor: vals.instructor || oldCourse.instructor,
-      price: vals.price || oldCourse.price,
-      createdAt: new Date().toISOString(),
-    };
-    console.info(vals);
-
-    try {
-      writeFileSync(PATH, JSON.stringify(jsonData, null, 2), "utf-8");
-      return res.status(200).json(jsonData[recordIndex]);
-    } catch (error) {
-      console.log("Failed to write updated data to file");
-      return;
-    }
-  });
+  try {
+    const course = await prisma.course.updateMany({
+      where: { id: Number(id) },
+      data: {
+        title: vals.title,
+        description: vals.description,
+        instructor: vals.instructor,
+        price: vals.price
+      }
+    })
+    return res.status(200).json(course)
+  }
+  catch (error) {
+    await prisma.$disconnect();
+    return res.status(400).json({course, error})
+  }
 };
 
 /**
@@ -99,69 +74,34 @@ const updateCourse = (req, res) => {
  * @desc Create a course
  * @returns String
  */
-const createCourse = (req, res) => {
+const createCourse = async (req, res) => {
   const Data = req.body;
   if (!Data) {
     return res.status(400).json({ msg: " Course Data not provided!" });
   }
+  try {
+    const result = await prisma.course.create({
+      data: req.body
+    });
+    return res.status(201).json(result)
+  } catch (error) {
+    await prisma.$disconnect();
+    console.error(error)
+    return res.status(304).json(error)
+  }
 
-  fs.readFile(PATH, "utf8", (err, data) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-    const jsonData = JSON.parse(data);
-    // Find the record to update
-    const recordIndex = jsonData.findIndex((record) => record.id === Data.id);
-    Data.createdAt = new Date().toISOString();
 
-    if (recordIndex >= 0) {
-      console.error("Record already exists.");
-      return res.status(400).json({ msg: " Course already exists!" });
-    } else {
-      try {
-        jsonData.push(Data);
-        writeFileSync(PATH, JSON.stringify(jsonData, null, 2), "utf-8");
-        console.log("Updated file successfully");
-        res.status(200).json({ msg: "Course created Successfuly." });
-      } catch (error) {
-        console.log("Failed to write updated data to file");
-        return res.status(500);
-      }
-    }
-  });
 };
 
-const deleteCourse = (req, res) => {
+const deleteCourse = async (req, res) => {
   const { id } = req.params;
   if (!id) {
     return res.status(400).json({ msg: "Please provide Course ID!" });
   }
-  // Read the file
-  fs.readFile(PATH, "utf8", (err, data) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-    const jsonData = JSON.parse(data);
-    // Find the record to update
-    const recordIndex = jsonData.findIndex((record) => record.id === id);
-
-    if (recordIndex === -1) {
-      return res.status(400).json({ msg: " Course ID not found!" });
-    }
-
-    // Delete the value
-    jsonData.splice(recordIndex, 1);
-
-    try {
-      writeFileSync(PATH, JSON.stringify(jsonData, null, 2), "utf-8");
-      return res.status(200).json({ msg: "Course Deleted Successfuly." });
-    } catch (error) {
-      console.log("Failed to write updated data to file");
-      return;
-    }
-  });
+  const course = await prisma.course.delete({
+    where: { id: Number(id) }
+  })
+  return res.status(204).json(course)
 };
 
 export const course = {
