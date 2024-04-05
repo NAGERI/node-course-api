@@ -14,9 +14,12 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String? @db.VarChar(30)
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  name     String? @db.VarChar(30)
+  age      Int
+  Course   Course? @relation(fields: [courseId], references: [id])
+  courseId Int?
 }
 
 model Course {
@@ -26,4 +29,5 @@ model Course {
   instructor  String   @db.VarChar(30)
   price       Int      @db.Integer
   createdAt   DateTime @default(now())
+  users       User[]
 }

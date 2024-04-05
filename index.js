@@ -5,8 +5,10 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import courseRouter from "./routes/courses.js";
+import courseRouter from "./routes/courses.router.js";
+import authRouter from "./routes/auth.js";
 import { uploadFile } from "./utils/uploadFile.js";
+import userRouter from "./routes/user.router.js";
 
 const app = express();
 app.use(express.json());
@@ -44,25 +46,6 @@ app.get("/logout", (req, res) => {
   res.redirect("/login");
 });
 
-app.post("/login", (req, res) => {
-  const uname = "john";
-  const pass = "password";
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).send("Please provide Username & Password!");
-  }
-
-  if (username !== uname || password !== pass) {
-    return res
-      .status(400)
-      .send("Access denied - Password or Username is incorrect!");
-  }
-
-  loggedIn = true;
-  res.redirect("/node-course");
-});
-
 app.get("/node-course", (req, res) => {
   try {
     if (loggedIn) {
@@ -75,6 +58,10 @@ app.get("/node-course", (req, res) => {
 });
 // Upload images endpoint
 app.post("/api/upload", uploadFile);
+
+// Middleware
+app.use("/api/auth", authRouter);
+app.use("/api/users", userRouter);
 app.use("/api/courses", courseRouter);
 app.listen(PORT, () =>
   console.log(`Course Server listening on ${BASE_URL}:${PORT}`)

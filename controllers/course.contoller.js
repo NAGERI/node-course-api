@@ -104,7 +104,7 @@ const deleteCourse = async (req, res) => {
   return res.status(204).json(course)
 };
 
-export const course = {
+export const  course = {
   getAllCourses,
   getCourse,
   createCourse,
