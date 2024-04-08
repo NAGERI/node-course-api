@@ -6,29 +6,33 @@ const courseSchema = Joi.object().keys({
   instructor: Joi.string().min(5).max(30).required(),
   price: Joi.number().integer(),
 });
-const userSchema = Joi.object({
+const userSchema = Joi.object().keys({
   email: Joi.string()
     .email({ minDomainSegments: 2, tlds: { allow: ["com", "org"] } })
     .required(),
-  name: Joi.string().alphanum().min(5).max(50).required(),
-  age: Joi.number().integer().min(13).max(70),
+  age: Joi.number().integer().required(),
+  name: Joi.string().min(5).max(50).required()
 });
 
- function validate(schema) { 
-  (req, res, next) => {
-    const { error } = schema.validate(req.body);
+const  validateReqCourse = (req, res, next) => {
+   const { error } = courseSchema.validate(req.body, { abortEarly: false });
     if (error) {
-      console.log(error)
-      const { details } = error;
-      const message = details.map((i) => i.message).join(", ");
-      return res.status(422).json({
-        type: details.type,
-        message,
-      });
-    } else {
-      next();
+        const errors = error.details.map((detail) => detail.message);
+        return res.status(422).json({ errors });
     }
-  };}
+      next();
+  };
+
+const  validateReqUser = (req, res, next) => {
+
+    const { error } = userSchema.validate(req.body, { abortEarly: false });
+    if (error) {
+        const errors = error.details.map((detail) => detail.message);
+        return res.status(422).json({ errors });
+    }
+      next();
+  };
 
 
-export { courseSchema, userSchema, validate };
+
+export { courseSchema, userSchema, validateReqCourse , validateReqUser};

@@ -45,6 +45,11 @@ const getCourse = async (req, res) => {
 
 };
 
+/**
+ * @route PUT /courses
+ * @desc Update a course
+ * @returns String
+ */
 const updateCourse = async (req, res) => {
   const { id } = req.params;
   const { ...vals } = req.body;
@@ -65,7 +70,7 @@ const updateCourse = async (req, res) => {
   }
   catch (error) {
     await prisma.$disconnect();
-    return res.status(400).json({course, error})
+    return res.status(400).json({ error})
   }
 };
 
@@ -75,8 +80,7 @@ const updateCourse = async (req, res) => {
  * @returns String
  */
 const createCourse = async (req, res) => {
-  const Data = req.body;
-  if (!Data) {
+  if (!req.body) {
     return res.status(400).json({ msg: " Course Data not provided!" });
   }
   try {
@@ -86,7 +90,6 @@ const createCourse = async (req, res) => {
     return res.status(201).json(result)
   } catch (error) {
     await prisma.$disconnect();
-    console.error(error)
     return res.status(304).json(error)
   }
 

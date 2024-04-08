@@ -39,6 +39,12 @@ const getUser = async (req, res) => {
   }
 };
 
+/**
+ * TODO: Return error if email is not unique.
+ * @route PATCH /users
+ * @description Update a user
+ * @returns String
+ */
 const updateUser = async (req, res) => {
   const { id } = req.params;
   const { ...vals } = req.body;
@@ -57,18 +63,18 @@ const updateUser = async (req, res) => {
     return res.status(200).json(user);
   } catch (error) {
     await prisma.$disconnect();
-    return res.status(400).json({ user, error });
+    return res.status(400).json({ error });
   }
 };
 
 /**
+ * TODO: Return error if email is not unique.
  * @route POST /users
- * @desc Create a course
+ * @description Create a user
  * @returns String
  */
 const createUser = async (req, res) => {
-  const Data = req.body;
-  if (!Data) {
+  if (!req.body) {
     return res.status(400).json({ msg: " User Data not provided!" });
   }
   try {
@@ -78,7 +84,6 @@ const createUser = async (req, res) => {
     return res.status(201).json(result);
   } catch (error) {
     await prisma.$disconnect();
-    console.error(error);
     return res.status(304).json(error);
   }
 };
