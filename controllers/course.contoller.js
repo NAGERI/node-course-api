@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { StatusCodes } from "http-status-codes";
 
 const prisma = new PrismaClient();
 
@@ -8,12 +9,13 @@ const prisma = new PrismaClient();
  */
 const getAllCourses = async (req, res) => {
   try {
-
     const coursesData = await prisma.course.findMany();
-    return res.status(200).json(coursesData);
+    return res.status(StatusCodes.OK).json(coursesData);
   } catch (error) {
     await prisma.$disconnect();
-    res.status(404).json({ message: "Error getting courses", err:error });
+    res
+      .status(StatusCodes.NOT_FOUND)
+      .json({ message: "Error getting courses", error });
   }
 };
 
@@ -25,24 +27,21 @@ const getAllCourses = async (req, res) => {
 const getCourse = async (req, res) => {
   const { id } = req.params;
   if (!id) {
-    res.status(400).json({ msg: "Please provide Course ID!" });
+    res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Please provide Course ID!" });
     return;
   }
   try {
-
     // Query the database.
     const course = await prisma.course.findUnique({
-      where: { id: Number(id) }
-    })
-    res.status(200).json(course);
-
+      where: { id: Number(id) },
+    });
+    res.status(StatusCodes.OK).json(course);
   } catch (error) {
     await prisma.$disconnect();
-    res.status(404).json({ msg: "Course not Found!" });
-
+    res.status(StatusCodes.NOT_FOUND).json({ msg: "Course not Found!" });
   }
-
-
 };
 
 /**
@@ -54,7 +53,9 @@ const updateCourse = async (req, res) => {
   const { id } = req.params;
   const { ...vals } = req.body;
   if (!id) {
-    return res.status(400).json({ msg: "Please provide Course ID!" });
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Please provide Course ID!" });
   }
   try {
     const course = await prisma.course.updateMany({
@@ -63,14 +64,13 @@ const updateCourse = async (req, res) => {
         title: vals.title,
         description: vals.description,
         instructor: vals.instructor,
-        price: vals.price
-      }
-    })
-    return res.status(200).json(course)
-  }
-  catch (error) {
+        price: vals.price,
+      },
+    });
+    return res.status(StatusCodes.OK).json(course);
+  } catch (error) {
     await prisma.$disconnect();
-    return res.status(400).json({ error})
+    return res.status(StatusCodes.NOT_MODIFIED).json({ error });
   }
 };
 
@@ -81,33 +81,35 @@ const updateCourse = async (req, res) => {
  */
 const createCourse = async (req, res) => {
   if (!req.body) {
-    return res.status(400).json({ msg: " Course Data not provided!" });
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: " Course Data not provided!" });
   }
   try {
-    const result = await prisma.course.create({
-      data: req.body
+    const newCourse = await prisma.course.create({
+      data: req.body,
     });
-    return res.status(201).json(result)
+    return res.status(StatusCodes.CREATED).json(newCourse);
   } catch (error) {
     await prisma.$disconnect();
-    return res.status(304).json(error)
+    return res.status(StatusCodes.BAD_REQUEST).json(error);
   }
-
-
 };
 
 const deleteCourse = async (req, res) => {
   const { id } = req.params;
   if (!id) {
-    return res.status(400).json({ msg: "Please provide Course ID!" });
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Please provide Course ID!" });
   }
   const course = await prisma.course.delete({
-    where: { id: Number(id) }
-  })
-  return res.status(204).json(course)
+    where: { id: Number(id) },
+  });
+  return res.status(StatusCodes.NO_CONTENT).json(course);
 };
 
-export const  course = {
+export const course = {
   getAllCourses,
   getCourse,
   createCourse,

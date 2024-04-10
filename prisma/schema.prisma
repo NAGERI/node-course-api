@@ -20,6 +20,8 @@ model User {
   age      Int
   Course   Course? @relation(fields: [courseId], references: [id])
   courseId Int?
+  role     Role    @default(STUDENT)
+  password String  @unique
 }
 
 model Course {
@@ -30,4 +32,10 @@ model Course {
   price       Int      @db.Integer
   createdAt   DateTime @default(now())
   users       User[]
+}
+
+enum Role {
+  ADMIN
+  STUDENT
+  TEACHER
 }
